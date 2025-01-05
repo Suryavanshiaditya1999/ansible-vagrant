@@ -1,0 +1,75 @@
+- name: Developer setup
+  hosts: dev
+  become: yes
+  tasks:
+    - name: update system
+      apt:
+        update_cache: yes
+
+    - name: Install required packages and tools
+      apt:
+        name:
+          - maven
+          - default-mysql-server
+          - default-mysql-client
+          - gradle
+          - nodejs
+          - npm
+          - git
+          - docker.io
+        state: present
+
+    - name: Install openjdk12
+      become: true
+      shell: |
+        wget https://download.java.net/java/GA/jdk12.0.2/e482c34c86bd4bf8b56c0b35558996b9/10/GPL/openjdk-12.0.2_linux-x64_bin.tar.gz
+        sudo mkdir /usr/java
+        sudo mv openjdk-12.0.2_linux-x64_bin.tar.gz /usr/java
+        cd /usr/java
+        sudo tar -xzvf openjdk-12.0.2_linux-x64_bin.tar.gz
+        echo -e "\nJAVA_HOME=/usr/java/jdk-12.0.2\nPATH=\$PATH:\$HOME/bin:\$JAVA_HOME/bin\nexport JAVA_HOME\nexport JRE_HOME\nexport PATH" | sudo tee -a /etc/profile
+        source /etc/profile
+        sudo update-alternatives --install "/usr/bin/java" "java" "/usr/java/jdk-12.0.2/bin/java" 1
+        sudo update-alternatives --install "/usr/bin/javac" "javac" "/usr/java/jdk-12.0.2/bin/javac" 1
+
+    - name: Install Google Chrome
+      become: true
+      shell: |
+        wget https://dl-ssl.google.com/linux/linux_signing_key.pub -O /tmp/google.pub
+        gpg --no-default-keyring --keyring /etc/apt/keyrings/google-chrome.gpg --import /tmp/google.pub
+        echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main' | sudo tee /etc/apt/sources.list.d/google-chrome.list
+        sudo apt-get update
+        sudo apt-get install google-chrome-stable
+
+    - name: Install VS Code
+      become: true
+      shell: |
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB3E94ADBE1229CF
+        sudo add-apt-repository -y "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"
+        sudo apt -y install code
+
+    - name: Install Intelli J Idea
+      become: true
+      shell: |
+        sudo snap install intellij-idea-community --classic
+
+    - name: Install curl
+      apt:
+        name:
+          - curl
+
+    - name: Download minikube
+      become: true
+      get_url:
+        url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        dest: /usr/local/bin/minikube
+        mode: "0755"
+
+    - name: Install required dependencies
+      become: true
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+        state: present
+        update_cache: yes
