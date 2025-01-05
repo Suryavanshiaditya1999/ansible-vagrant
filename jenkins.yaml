@@ -1,0 +1,54 @@
+---
+- name: Jenkins setup
+  hosts: jenkins
+  become: yes
+  tasks:
+    - name: Update system
+      apt:
+        update_cache: yes
+
+    - name: Download Jenkins repository key
+      get_url:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+        dest: /usr/share/keyrings/jenkins-keyring.asc
+        mode: "0644"
+
+    - name: Add Jenkins repository
+      copy:
+        content: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/"
+        dest: /etc/apt/sources.list.d/jenkins.list
+        mode: "0644"
+
+    - name: Update package cache
+      apt:
+        update_cache: yes
+
+    - name: Install Java
+      apt:
+        name: openjdk-17-jre
+        state: present
+
+    - name: Install Jenkins
+      apt:
+        name: jenkins
+        state: present
+
+    - name: Starting Jenkins
+      service:
+        name: jenkins
+        state: started
+        enabled: true
+
+    - name: Install Jenkins plugins
+      jenkins_plugin:
+        name: "{{ item }}"
+      with_items:
+        - git-client
+        - git-parameter
+        - git
+        - git-server
+        - docker-commons
+        - docker-workflow
+        - credentials
+        - nodejs
+        - gradle
